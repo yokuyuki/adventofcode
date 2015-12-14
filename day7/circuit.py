@@ -1,4 +1,4 @@
-import collections, functools, operator, pprint, re, sys
+import collections, functools, operator, re, sys
 
 class Gate:
     def __init__(self, fn, incoming, outgoing):
@@ -53,4 +53,6 @@ with open('connections', 'r') as f:
         elif inverter:
             operand, out = wires[inverter.group(1)], wires[inverter.group(2)]
             gates[inverter.group(0)] = Gate(lambda operand=operand: 65535 - operand.get_signal(), [operand], out)
-    pprint.PrettyPrinter().pprint(wires)
+    print(wires['a'])
+    wires['b'].set_signal(wires['a'].get_signal())
+    print(wires['a'])
