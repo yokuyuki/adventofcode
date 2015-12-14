@@ -1,7 +1,7 @@
-from functools import reduce
+import functools, itertools
 
 def look_and_say(seq):
-    new_seq, last_count, last_digit = reduce(lambda state, letter: (state[0] + str(state[1]) + state[2] if letter != state[2] else state[0], state[1] + 1 if letter == state[2] else 1, letter), seq, ['', '', ''])
-    return new_seq + str(last_count) + last_digit
+    return ''.join([str(len(tuple(grouper))) + letter for letter, grouper in itertools.groupby(seq)])
 
-print(len(reduce(lambda previous_seq, i: look_and_say(previous_seq), range(40), '3113322113')))
+print(len(functools.reduce(lambda previous_seq, i: look_and_say(previous_seq), range(40), '3113322113')))
+print(len(functools.reduce(lambda previous_seq, i: look_and_say(previous_seq), range(50), '3113322113')))
