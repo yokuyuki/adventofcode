@@ -5,10 +5,8 @@ def mine(good_md5sum):
     while True:
         m, i = base.copy(), i+1
         m.update(str(i).encode('utf-8'))
-        md5sum = m.digest()
-        if good_md5sum(md5sum):
-            print(i)
-            break
+        if good_md5sum(m.digest()):
+            return i
 
-mine(lambda md5sum: True if md5sum[0] == md5sum[1] == (md5sum[2] & 0xf0) == 0 else False)
-mine(lambda md5sum: True if md5sum[0] == md5sum[1] == md5sum[2] == 0 else False)
+print(mine(lambda md5sum: True if md5sum[0] == md5sum[1] == (md5sum[2] & 0xf0) == 0 else False))
+print(mine(lambda md5sum: True if md5sum[0] == md5sum[1] == md5sum[2] == 0 else False))
