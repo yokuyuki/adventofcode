@@ -2,24 +2,19 @@ import collections, functools, operator, re, sys
 
 class Gate:
     def __init__(self, fn, incoming, outgoing):
-        self.fn = fn
+        self.fn, self.incoming, self.outgoing = fn, incoming, outgoing
         self.incoming = incoming
         for wire in self.incoming:
             wire.connect(self)
-        self.outgoing = outgoing
         self.activate()
 
     def activate(self):
-        if functools.reduce(lambda can_activate, wire: can_activate and wire.get_signal() is not None, self.incoming, True):
+        if functools.reduce(lambda can_activate, wire: can_activate and wire.signal is not None, self.incoming, True):
             self.outgoing.set_signal(self.fn())
 
 class Wire:
     def __init__(self):
-        self.signal = None
-        self.outgoing = []
-
-    def get_signal(self):
-        return self.signal
+        self.signal, self.outgoing = None, []
 
     def set_signal(self, signal):
         if signal != self.signal and (type(signal) == int or (type(signal) == str and signal.isnumeric())):
@@ -38,10 +33,10 @@ with open('connections', 'r') as f:
         combiner = re.search(r"^(\w+) (AND|OR|LSHIFT|RSHIFT) (\w+) -> (\w+)", connection)
         if passthru:
             operand, out, op = wires[passthru.group('operand')].set_signal(passthru.group('operand')), wires[passthru.group('out')], (lambda x: 65535 - x) if passthru.group('inverter') else (lambda x: x)
-            gates[passthru.group(0)] = Gate(lambda op=op, operand=operand: op(operand.get_signal()), [operand], out)
+            gates[passthru.group(0)] = Gate(lambda op=op, operand=operand: op(operand.signal), [operand], out)
         elif combiner:
             a, b, out, op = wires[combiner.group(1)].set_signal(combiner.group(1)), wires[combiner.group(3)].set_signal(combiner.group(3)), wires[combiner.group(4)], ops[combiner.group(2)]
-            gates[combiner.group(0)] = Gate(lambda op=op, a=a, b=b: op(a.get_signal(), b.get_signal()), [a, b], out)
-    print(wires['a'].get_signal())
-    wires['b'].set_signal(wires['a'].get_signal())
-    print(wires['a'].get_signal())
+            gates[combiner.group(0)] = Gate(lambda op=op, a=a, b=b: op(a.signal, b.signal), [a, b], out)
+    print(wires['a'].signal)
+    wires['b'].set_signal(wires['a'].signal)
+    print(wires['a'].signal)
