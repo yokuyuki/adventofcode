@@ -1,4 +1,4 @@
-import functools, re
+import re
 
 def find_sue(comparison):
     with open('sues', 'r') as f:
@@ -9,5 +9,5 @@ def find_sue(comparison):
                 return sue_num
 
 hint = {'children': 3, 'cats': 7, 'samoyeds': 2, 'pomeranians': 3, 'akitas': 0, 'vizslas': 0, 'goldfish': 5, 'trees': 3, 'cars': 2, 'perfumes': 1}
-print(find_sue(lambda traits, hint=hint: functools.reduce(lambda correct_sue, trait: correct_sue and trait[0] in hint and hint[trait[0]] == trait[1], traits.items(), True)))
-print(find_sue(lambda traits, hint=hint: functools.reduce(lambda correct_sue, trait: correct_sue and trait[0] in hint and (hint[trait[0]] < trait[1] if trait[0] in ('cats', 'trees') else hint[trait[0]] > trait[1] if trait[0] in ('pomeranians', 'goldfish') else hint[trait[0]] == trait[1]), traits.items(), True)))
+print(find_sue(lambda traits, hint=hint: all(trait in hint and hint[trait] == num for trait, num in traits.items())))
+print(find_sue(lambda traits, hint=hint: all(trait in hint and hint[trait] < num if trait in ('cats', 'trees') else hint[trait] > num if trait in ('pomeranians', 'goldfish') else hint[trait] == num for trait, num in traits.items())))

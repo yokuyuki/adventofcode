@@ -1,4 +1,4 @@
-import collections, functools, operator, re, sys
+import collections, operator, re, sys
 
 class Gate:
     def __init__(self, fn, incoming, outgoing):
@@ -9,7 +9,7 @@ class Gate:
         self.activate()
 
     def activate(self):
-        if functools.reduce(lambda can_activate, wire: can_activate and wire.signal is not None, self.incoming, True):
+        if all(wire.signal is not None for wire in self.incoming):
             self.outgoing.set_signal(self.fn())
 
 class Wire:

@@ -1,7 +1,7 @@
 import functools, json
 
 def count(things):
-    if type(things) == list or (type(things) == dict and functools.reduce(lambda no_red, thing: False if thing == 'red' else no_red, things.values(), True)):
+    if type(things) == list or (type(things) == dict and all(thing != 'red' for thing in things.values())):
         return functools.reduce(lambda sum, thing: sum + count(thing), things if type(things) == list else things.values(), 0)
     return things if type(things) == int else 0
 
