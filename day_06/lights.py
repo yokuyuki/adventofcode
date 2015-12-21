@@ -1,4 +1,4 @@
-import collections, functools, itertools, operator, re
+import collections, itertools, re
 
 def light_pattern(instruction_translation):
     with open('lighting_configuration', 'r') as f:
@@ -9,7 +9,7 @@ def light_pattern(instruction_translation):
             fn = instruction_translation(instruction)
             for x, y in itertools.product(range(x1, x2 + 1), range(y1, y2 + 1)):
                 lights[x][y] = fn(lights[x][y])
-        print(functools.reduce(lambda sum, col: sum + functools.reduce(operator.add, col.values(), 0), lights.values(),0))
+        print(sum(sum(col.values()) for col in lights.values()))
 
 light_pattern(lambda instruction: (lambda light: 1) if instruction == 'turn on' else (lambda light: 0) if instruction == 'turn off' else (lambda light: (light + 1) % 2))
 light_pattern(lambda instruction: (lambda light: light + 1) if instruction == 'turn on' else (lambda light: light - 1 if light > 0 else 0) if instruction == 'turn off' else (lambda light: light + 2))

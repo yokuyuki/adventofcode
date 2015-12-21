@@ -1,12 +1,6 @@
-from functools import reduce
-
-def is_valid_password(password):
-    distinct_pairs = set([letter*2 for letter, previous_letter in zip(password, ' ' + password) if letter == previous_letter])
-    three_consecutive_letters, no_bad_letters = reduce(lambda state, letter_triplet: (True if ord(letter_triplet[2]) + 2 == ord(letter_triplet[1]) + 1 == ord(letter_triplet[0]) else state[0], False if letter_triplet[0] in 'oil' else state[1]), zip(password, ' ' + password, '  '+ password), (False, True))
-    return len(distinct_pairs) >= 2 and three_consecutive_letters and no_bad_letters
-
 def next_password(password):
-    integerize = lambda password: reduce(lambda num, enumeration: num + (ord(enumeration[1]) - ord('a')) * 26**enumeration[0],enumerate(password[::-1]), 0)
+    is_valid_password = lambda password: len(set([letter*2 for prev_letter, letter in zip(' ' + password, password) if letter == prev_letter])) >= 2 and any(ord(prev_prev_letter) + 2 == ord(prev_letter) + 1 == ord(letter) for prev_prev_letter, prev_letter, letter in zip('  '+ password, ' ' + password, password)) and all(letter not in 'oil' for letter in password)
+    integerize = lambda password: sum((ord(letter) - ord('a')) * 26**index for index, letter in enumerate(password[::-1]))
     alphabetize = lambda integer: '' if integer == 0 else alphabetize(integer // 26) + chr(integer % 26 + ord('a'))
     new_password = alphabetize(integerize(password) + 1)
     while not is_valid_password(new_password):
