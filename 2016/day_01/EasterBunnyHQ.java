@@ -1,13 +1,22 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.stream.IntStream;
 
 public class EasterBunnyHQ {
 
     private int x = 0;
     private int y = 0;
     private int angle = 0;
+
+    // Part 2
+    private HashSet<AbstractMap.Entry<Integer, Integer>> visited = new HashSet<AbstractMap.Entry<Integer, Integer>>() {{
+        this.add(new AbstractMap.SimpleEntry<>(0, 0));
+    }};
+    private AbstractMap.Entry<Integer, Integer> firstRevisitedLocation = null;
 
     public EasterBunnyHQ() {
         try {
@@ -25,15 +34,31 @@ public class EasterBunnyHQ {
         }
 
         int steps = Integer.parseInt(instruction.substring(1));
-        x += Math.round(Math.sin(Math.toRadians(angle))) * steps;
-        y += Math.round(Math.cos(Math.toRadians(angle))) * steps;
+        int xModifier = (int) Math.sin(Math.toRadians(angle));
+        int yModifier = (int) Math.cos(Math.toRadians(angle));
+        IntStream.rangeClosed(1, steps).forEachOrdered(i -> {    // Part 2
+            AbstractMap.Entry<Integer, Integer> point = new AbstractMap.SimpleEntry<>(xModifier*i + x, yModifier*i + y);
+            if (firstRevisitedLocation == null && visited.contains(point)) {
+                firstRevisitedLocation = point;
+            } else if (firstRevisitedLocation == null) {
+                visited.add(point);
+            }
+        });
+        x += xModifier * steps;
+        y += yModifier * steps;
     }
 
-    public int getManhattanDistance() {
+    public int getFinalManhattanDistance() {
         return Math.abs(x) + Math.abs(y);
     }
 
+    public int getFirstRevisitedLocationManhattanDistance() {
+        return Math.abs(firstRevisitedLocation.getKey()) + Math.abs(firstRevisitedLocation.getValue());
+    }
+
     public static void main(String[] args) {
-        System.out.println(new EasterBunnyHQ().getManhattanDistance());
+        EasterBunnyHQ location = new EasterBunnyHQ();
+        System.out.println("Part 1: " + location.getFinalManhattanDistance());
+        System.out.println("Part 2: " + location.getFirstRevisitedLocationManhattanDistance());
     }
 }
