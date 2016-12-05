@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -10,7 +11,7 @@ import java.util.stream.Stream;
 
 public class RoomSecurity {
 
-    private final Pattern roomPattern = Pattern.compile("([a-z-]+)(\\d+)\\[([a-z]+)\\]");
+    private final Pattern roomPattern = Pattern.compile("([a-z-]+)-(\\d+)\\[([a-z]+)\\]");
     private List<String> rooms;
 
     public RoomSecurity() {
@@ -22,16 +23,20 @@ public class RoomSecurity {
     }
 
     public int getRealRoomSum() {
-        return rooms.parallelStream()
-                .map(roomPattern::matcher)
-                .peek(Matcher::matches)
-                .filter(this::isRealRoom)
+        return getRealRooms()
                 .mapToInt(m -> Integer.parseInt(m.group(2)))
                 .sum();
     }
 
+    private Stream<Matcher> getRealRooms() {
+        return rooms.parallelStream()
+                .map(roomPattern::matcher)
+                .peek(Matcher::matches)
+                .filter(this::isRealRoom);
+    }
+
     private boolean isRealRoom(Matcher roomMatch) {
-        String checksum = new String(roomMatch.group(1).chars()
+        String checksum = roomMatch.group(1).chars()
                 .mapToObj(i -> (char) i)
                 .filter(c -> c != '-')
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
@@ -43,15 +48,39 @@ public class RoomSecurity {
                         }
                         return o1.getKey().compareTo(o2.getKey());
                 })
-                .mapToInt(e -> e.getKey())
                 .limit(5)
-                .toArray(), 0, 5);
+                .map(e -> String.valueOf(e.getKey()))
+                .collect(Collectors.joining());
 
         return roomMatch.group(3).equals(checksum);
     }
 
+    public int findNorthPoleObjectStorage() {
+        return decryptRooms()
+                .filter(e -> e.getKey().contains("northpole"))
+                .findFirst()
+                .get()
+                .getValue();
+    }
+
+    private Stream<AbstractMap.Entry<String, Integer>> decryptRooms() {
+        return getRealRooms()
+                .map(m -> new AbstractMap.SimpleEntry<>(m.group(1), Integer.parseInt(m.group(2))))
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey().chars()
+                            .mapToObj(i -> (char) i)
+                            .map(c -> c == '-' ? ' ' : reverseShiftCipher(c, e.getValue()))
+                            .map(String::valueOf)
+                            .collect(Collectors.joining()), e.getValue()));
+    }
+
+    private char reverseShiftCipher(char letter, int sectorID) {
+        return (char) ((letter - 'a' + sectorID) % 26 + 'a');
+    }
+
     public static void main(String[] args) {
-        System.out.println("Part 1: " + new RoomSecurity().getRealRoomSum());
+        RoomSecurity rs = new RoomSecurity();
+        System.out.println("Part 1: " + rs.getRealRoomSum());
+        System.out.println("Part 2: " + rs.findNorthPoleObjectStorage());
     }
 
 }
