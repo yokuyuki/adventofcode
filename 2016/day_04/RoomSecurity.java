@@ -41,13 +41,7 @@ public class RoomSecurity {
                 .filter(c -> c != '-')
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                 .entrySet().stream()
-                .sorted((o1, o2) ->  {
-                        int frequencyOrder = o2.getValue().compareTo(o1.getValue());
-                        if (frequencyOrder != 0) {
-                            return frequencyOrder;
-                        }
-                        return o1.getKey().compareTo(o2.getKey());
-                })
+                .sorted((o1, o2) -> o1.getValue().equals(o2.getValue()) ? o1.getKey().compareTo(o2.getKey()) : o2.getValue().compareTo(o1.getValue()))
                 .limit(5)
                 .map(e -> String.valueOf(e.getKey()))
                 .collect(Collectors.joining());
