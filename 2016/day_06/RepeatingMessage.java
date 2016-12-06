@@ -1,7 +1,9 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -18,13 +20,14 @@ public class RepeatingMessage {
         }
     }
 
-    public String getErrorCorrectedMessage() {
+    private String getErrorCorrectedMessage(boolean leastCommonCharacter) {
+        Comparator<Map.Entry<Character, Long>> ascendingOrder = Map.Entry.comparingByValue();
         return IntStream.range(0, message.get(0).length())
                 .mapToObj(i -> message.stream()
                         .map(s -> s.charAt(i))
                         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                         .entrySet().stream()
-                        .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue()))
+                        .sorted(leastCommonCharacter ? ascendingOrder : ascendingOrder.reversed())
                         .map(e -> String.valueOf(e.getKey()))
                         .findFirst()
                         .get())
@@ -32,6 +35,8 @@ public class RepeatingMessage {
     }
 
     public static void main(String args[]) {
-        System.out.println("Part 1: " + new RepeatingMessage().getErrorCorrectedMessage());
+        RepeatingMessage rm = new RepeatingMessage();
+        System.out.println("Part 1: " + rm.getErrorCorrectedMessage(false));
+        System.out.println("Part 2: " + rm.getErrorCorrectedMessage(true));
     }
 }
