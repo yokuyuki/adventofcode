@@ -32,10 +32,10 @@ public class RoomSecurity {
         return rooms.parallelStream()
                 .map(roomPattern::matcher)
                 .peek(Matcher::matches)
-                .filter(this::isRealRoom);
+                .filter(RoomSecurity::isRealRoom);
     }
 
-    private boolean isRealRoom(Matcher roomMatch) {
+    private static boolean isRealRoom(Matcher roomMatch) {
         String checksum = roomMatch.group(1).chars()
                 .mapToObj(i -> (char) i)
                 .filter(c -> c != '-')
@@ -67,7 +67,7 @@ public class RoomSecurity {
                             .collect(Collectors.joining()), e.getValue()));
     }
 
-    private char reverseShiftCipher(char letter, int sectorID) {
+    private static char reverseShiftCipher(char letter, int sectorID) {
         return (char) ((letter - 'a' + sectorID) % 26 + 'a');
     }
 
