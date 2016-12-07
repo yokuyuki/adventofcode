@@ -1,28 +1,31 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class IPV7 {
 
-    private Stream<String> addresses;
+    private List<String> addresses;
 
     public IPV7() {
         try {
-            addresses = Files.lines(Paths.get("day_07/addresses"));
+            addresses = Files.readAllLines(Paths.get("day_07/addresses"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public long getTLSSupportCount() {
-        return addresses.filter(IPV7::supportsTLS).count();
+        return addresses.stream().filter(IPV7::supportsTLS).count();
     }
 
     private static boolean supportsTLS(String address) {
         String[] sequences = address.split("\\[|\\]");
-        boolean hasAbba = IntStream.range(0, sequences.length)
+        boolean hasAbbaInSupernet = IntStream.range(0, sequences.length)
                 .filter(i -> (i & 1) == 0)
                 .mapToObj(i -> sequences[i])
                 .anyMatch(IPV7::containsABBA);
@@ -31,7 +34,7 @@ public class IPV7 {
                 .mapToObj(i -> sequences[i])
                 .anyMatch(IPV7::containsABBA);
 
-        return hasAbba && !hasAbbaInHypernet;
+        return hasAbbaInSupernet && !hasAbbaInHypernet;
     }
 
     private static boolean containsABBA(String sequence) {
@@ -46,7 +49,51 @@ public class IPV7 {
                 sequence.charAt(1) == sequence.charAt(2);
     }
 
+    public long getSSLSupportCount() {
+        return addresses.stream().filter(IPV7::supportsSSL).count();
+    }
+
+    private static boolean supportsSSL(String address) {
+        String[] sequences = address.split("\\[|\\]");
+        Set<String> abaInSupernet = IntStream.range(0, sequences.length)
+                .filter(i -> (i & 1) == 0)
+                .mapToObj(i -> getABAList(sequences[i]))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        boolean hasBAB = IntStream.range(0, sequences.length)
+                .filter(i -> (i & 1) != 0)
+                .anyMatch(i -> IPV7.hasCorrespondingBABInHypernet(sequences[i], abaInSupernet));
+
+        return !abaInSupernet.isEmpty() && hasBAB;
+    }
+
+    private static List<String> getABAList(String sequence) {
+        return IntStream.rangeClosed(0, sequence.length()-3)
+                .mapToObj(i -> sequence.substring(i, i+3))
+                .filter(IPV7::isABA)
+                .collect(Collectors.toList());
+    }
+
+    private static boolean isABA(String sequence) {
+        return sequence.charAt(0) == sequence.charAt(2) &&
+                sequence.charAt(0) != sequence.charAt(1);
+    }
+
+    private static boolean hasCorrespondingBABInHypernet(String sequence, Set<String> matchingABA) {
+        return IntStream.rangeClosed(0, sequence.length()-3)
+                .mapToObj(i -> sequence.substring(i, i+3))
+                .filter(IPV7::isABA)
+                .anyMatch(s -> IPV7.hasCorrespondingBABInSequence(s, matchingABA));
+    }
+
+    private static boolean hasCorrespondingBABInSequence(String bab, Set<String> matchingABA) {
+        return matchingABA.stream()
+                .anyMatch(aba -> bab.charAt(0) == aba.charAt(1) && aba.charAt(0) == bab.charAt(1));
+    }
+
     public static void main(String args[]) {
-        System.out.println("Part 1: " + new IPV7().getTLSSupportCount());
+        IPV7 ip = new IPV7();
+        System.out.println("Part 1: " + ip.getTLSSupportCount());
+        System.out.println("Part 2: " + ip.getSSLSupportCount());
     }
 }
