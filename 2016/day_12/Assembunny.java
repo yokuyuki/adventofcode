@@ -10,13 +10,9 @@ public class Assembunny {
     private List<String> instructions;
     private Map<Character, Integer> registers;
 
-    public Assembunny() {
+    public Assembunny(Map<Character, Integer> initialValues) {
         try {
-            registers = new HashMap<>();
-            registers.put('a', 0);
-            registers.put('b', 0);
-            registers.put('c', 0);
-            registers.put('d', 0);
+            registers = initialValues;
             instructions = Files.readAllLines(Paths.get("day_12/instructions"));
             executeInstructions();
         } catch (IOException e) {
@@ -63,8 +59,20 @@ public class Assembunny {
     }
 
     public static void main(String args[]) {
-        Assembunny asm = new Assembunny();
+        Assembunny asm = new Assembunny(new HashMap<Character, Integer>() {{
+            this.put('a', 0);
+            this.put('b', 0);
+            this.put('c', 0);
+            this.put('d', 0);
+        }});
         System.out.println("Part 1: " + asm.getRegister('a'));
+        asm = new Assembunny(new HashMap<Character, Integer>() {{
+            this.put('a', 0);
+            this.put('b', 0);
+            this.put('c', 1);
+            this.put('d', 0);
+        }});
+        System.out.println("Part 2: " + asm.getRegister('a'));
     }
 
 }
