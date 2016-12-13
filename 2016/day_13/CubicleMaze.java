@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class CubicleMaze {
 
@@ -8,6 +9,16 @@ public class CubicleMaze {
 
     public CubicleMaze(int seed) {
         this.seed = seed;
+    }
+
+    private void print(int width, int height) {
+        IntStream.range(0, height)
+                .forEachOrdered(row -> {
+                    IntStream.range(0, width)
+                            .mapToObj(col -> isWall(col, row) ? '#' : '.')
+                            .forEachOrdered(System.out::print);
+                    System.out.println();
+                });
     }
 
     public int minWalk(int x, int y) {
@@ -38,6 +49,27 @@ public class CubicleMaze {
         return minSteps.map(i -> i + 1).orElse(Integer.MAX_VALUE);
     }
 
+    public int maxDistinctWalk(int steps) {
+        HashSet<String> visited = new HashSet<>();
+        distinctWalk(1, 1, steps, visited, new HashSet<>());
+        return visited.size();
+    }
+
+    private void distinctWalk(int x, int y, int steps, HashSet<String> visited, HashSet<String> route) {
+        String position = x + "," + y;
+        if (x < 0 || y < 0 || isWall(x, y) || route.contains(position) || steps < 0) {
+            return;
+        }
+
+        route.add(position);
+        visited.add(position);
+        distinctWalk(x + 1, y, steps - 1, visited, route);
+        distinctWalk(x - 1, y, steps - 1, visited, route);
+        distinctWalk(x, y + 1, steps - 1, visited, route);
+        distinctWalk(x, y - 1, steps - 1, visited, route);
+        route.remove(position);
+    }
+
     private boolean isWall(int x, int y) {
         int sum = x*x + 3*x + 2*x*y + y + y*y + seed;
         int ones;
@@ -50,6 +82,7 @@ public class CubicleMaze {
     public static void main(String args[]) {
         CubicleMaze maze = new CubicleMaze(1350);
         System.out.println("Part 1: " + maze.minWalk(31, 39));
+        System.out.println("Part 2: " + maze.maxDistinctWalk(50));
     }
 
 }
