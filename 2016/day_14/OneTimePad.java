@@ -10,6 +10,7 @@ public class OneTimePad {
     private String salt;
     private MessageDigest md5;
     private ArrayList<String> hashes;
+    private int extraHashings;
 
     public OneTimePad(String salt) {
         this.salt = salt;
@@ -20,7 +21,8 @@ public class OneTimePad {
         }
     }
 
-    public int[] generateKeys(int numOfKeys) {
+    public int[] generateKeys(int numOfKeys, boolean keyStretching) {
+        extraHashings = keyStretching ? 2016 : 0;
         hashes = new ArrayList<>();
         return IntStream.iterate(0, i -> i + 1)
                 .peek(i -> {
@@ -58,15 +60,23 @@ public class OneTimePad {
 
     private void generate1000Hashes(int index) {
         IntStream.range(index, index + 1000)
-                .mapToObj(i -> {
-                    md5.update((salt + i).getBytes());
+                .mapToObj(this::generateHash).forEachOrdered(hashes::add);
+    }
+
+    private String generateHash(int index) {
+        return IntStream.rangeClosed(0, extraHashings)
+                .mapToObj(i -> "")
+                .reduce(salt + index, (previous, empty) -> {
+                    md5.update((previous).getBytes());
                     return String.format("%032x", new BigInteger(1, md5.digest()));
-                }).forEachOrdered(hashes::add);
+                });
     }
 
     public static void main(String args[]) {
         OneTimePad otp = new OneTimePad("jlmsuwbz");
-        int[] keys = otp.generateKeys(64);
+        int[] keys = otp.generateKeys(64, false);
         System.out.println("Part 1: " + keys[63]);
+        keys = otp.generateKeys(64, true);
+        System.out.println("Part 2: " + keys[63]);
     }
 }
