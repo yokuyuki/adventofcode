@@ -3,6 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,15 +20,12 @@ public class Scrambler {
     private static final Pattern reversePositionPattern = Pattern.compile("reverse positions (\\d+) through (\\d+)");
     private static final Pattern movePositionPattern = Pattern.compile("move position (\\d+) to position (\\d+)");
 
+    private List<String> operations;
     private ArrayList<Character> password;
 
-    public Scrambler(String password) {
-        this.password = password.chars()
-                .mapToObj(i -> (char)i)
-                .collect(Collectors.toCollection(ArrayList::new));
+    public Scrambler() {
         try {
-            Files.lines(Paths.get("day_21/operations"))
-                    .forEachOrdered(this::parseOperation);
+            operations = Files.readAllLines(Paths.get("day_21/operations"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,13 +96,39 @@ public class Scrambler {
         password.add(y, target);
     }
 
-    public String getScrambledPassword() {
-        return password.stream()
+    public String getScrambledPassword(String password) {
+        this.password = password.chars()
+                .mapToObj(i -> (char)i)
+                .collect(Collectors.toCollection(ArrayList::new));
+        operations.forEach(this::parseOperation);
+
+        return this.password.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining());
     }
 
+    private void generatePasswordPermutations(List<String> permutations, String prefix, String alphabet) {
+        if (alphabet.length() == 1) {
+            permutations.add(prefix + alphabet);
+        }
+
+        alphabet.chars()
+                .mapToObj(i -> (char)i)
+                .forEach(c -> generatePasswordPermutations(permutations, prefix + c, alphabet.replace(Character.toString(c), "")));
+    }
+
+    private String getUnscrambledPassword(String scrambled) {
+        ArrayList<String> passwords = new ArrayList<>();
+        generatePasswordPermutations(passwords, "", scrambled);
+
+        return passwords.stream()
+                .filter(s -> scrambled.equals(getScrambledPassword(s)))
+                .findFirst().orElse("");
+    }
+
     public static void main(String args[]) {
-        System.out.println("Part 1: " + new Scrambler("abcdefgh").getScrambledPassword());
+        Scrambler scrambler = new Scrambler();
+        System.out.println("Part 1: " + scrambler.getScrambledPassword("abcdefgh"));
+        System.out.println("Part 1: " + scrambler.getUnscrambledPassword("fbgdceah"));
     }
 }
