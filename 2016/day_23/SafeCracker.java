@@ -155,5 +155,12 @@ public class SafeCracker {
             this.put('d', 0);
         }});
         System.out.println("Part 1: " + sc.getValue("a"));
+        sc = new SafeCracker(new HashMap<Character, Integer>() {{
+            this.put('a', 12);
+            this.put('b', 0);
+            this.put('c', 0);
+            this.put('d', 0);
+        }});
+        System.out.println("Part 2: " + sc.getValue("a"));
     }
 }
