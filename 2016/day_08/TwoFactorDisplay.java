@@ -82,7 +82,7 @@ public class TwoFactorDisplay {
         display[y] = row.stream().mapToInt(i->i).toArray();
     }
 
-    private static void rotateList(LinkedList list, int rotationAmount) {
+    private static void rotateList(LinkedList<Integer> list, int rotationAmount) {
         IntStream.range(0, rotationAmount)
                 .forEachOrdered(i -> list.addFirst(list.removeLast()));
     }
