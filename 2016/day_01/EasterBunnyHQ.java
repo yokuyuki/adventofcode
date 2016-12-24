@@ -1,64 +1,82 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class EasterBunnyHQ {
 
-    private int x = 0;
-    private int y = 0;
-    private int angle = 0;
+    private static class Position {
+        public int y;
+        public int x;
+        public int angle;
 
-    // Part 2
-    private HashSet<AbstractMap.Entry<Integer, Integer>> visited = new HashSet<AbstractMap.Entry<Integer, Integer>>() {{
-        this.add(new AbstractMap.SimpleEntry<>(0, 0));
-    }};
-    private AbstractMap.Entry<Integer, Integer> firstRevisitedLocation = null;
+        Position(int y, int x, int angle) {
+            this.y = y;
+            this.x = x;
+            this.angle = angle;
+        }
+
+        public void setAngle(int angle) {
+            this.angle = angle;
+        }
+    }
+
+    private String[] instructions;
 
     public EasterBunnyHQ() {
         try {
-            String[] instructions = new String(Files.readAllBytes(Paths.get("day_01/instructions"))).split(", ");
-            Arrays.asList(instructions).stream().forEachOrdered(this::processInstruction);
+            instructions = new String(Files.readAllBytes(Paths.get("day_01/instructions"))).split(",\\s+");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void processInstruction(String instruction) {
-        switch (instruction.charAt(0)) {
-            case 'L': angle -= 90; break;
-            case 'R': angle += 90; break;
-        }
-
-        int steps = Integer.parseInt(instruction.substring(1));
-        int xModifier = (int) Math.sin(Math.toRadians(angle));
-        int yModifier = (int) Math.cos(Math.toRadians(angle));
-        IntStream.rangeClosed(1, steps).forEachOrdered(i -> {    // Part 2
-            AbstractMap.Entry<Integer, Integer> point = new AbstractMap.SimpleEntry<>(xModifier*i + x, yModifier*i + y);
-            if (firstRevisitedLocation == null && visited.contains(point)) {
-                firstRevisitedLocation = point;
-            } else if (firstRevisitedLocation == null) {
-                visited.add(point);
-            }
-        });
-        x += xModifier * steps;
-        y += yModifier * steps;
-    }
-
     public int getFinalManhattanDistance() {
-        return Math.abs(x) + Math.abs(y);
+        Position position = new Position(0, 0, 0);
+        getStepStream(position).forEach(i -> {
+            position.x += (int) Math.sin(Math.toRadians(position.angle)) * i;
+            position.y += (int) Math.cos(Math.toRadians(position.angle)) * i;
+        });
+        return Math.abs(position.x) + Math.abs(position.y);
     }
 
-    public int getFirstRevisitedLocationManhattanDistance() {
-        return Math.abs(firstRevisitedLocation.getKey()) + Math.abs(firstRevisitedLocation.getValue());
+    public int getRevisitedManhattanDistance() {
+        Position position = new Position(0, 0, 0);
+        HashSet<String> visited = new HashSet<>();
+        getStepStream(position).anyMatch(i -> {
+            int xModifier = (int) Math.sin(Math.toRadians(position.angle));
+            int yModifier = (int) Math.cos(Math.toRadians(position.angle));
+            return IntStream.rangeClosed(1, i).anyMatch(j -> {
+                position.x += xModifier;
+                position.y += yModifier;
+                String positionStr = position.y + "," + position.x;
+                boolean revisited = visited.contains(positionStr);
+                visited.add(positionStr);
+                return revisited;
+            });
+        });
+        return Math.abs(position.x) + Math.abs(position.y);
+    }
+
+    private IntStream getStepStream(Position state) {
+        return Stream.of(instructions)
+                .peek(s -> state.setAngle(nextAngle(s, state.angle)))
+                .mapToInt(s -> Integer.parseInt(s.substring(1)));
+    }
+
+    private int nextAngle(String instruction, int currentAngle) {
+        switch (instruction.charAt(0)) {
+            case 'L': return currentAngle - 90;
+            case 'R': return currentAngle + 90;
+            default: return currentAngle;
+        }
     }
 
     public static void main(String[] args) {
         EasterBunnyHQ location = new EasterBunnyHQ();
         System.out.println("Part 1: " + location.getFinalManhattanDistance());
-        System.out.println("Part 2: " + location.getFirstRevisitedLocationManhattanDistance());
+        System.out.println("Part 2: " + location.getRevisitedManhattanDistance());
     }
 }
