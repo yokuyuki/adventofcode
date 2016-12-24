@@ -59,8 +59,11 @@ public class Roomba {
                         .forEach(f -> distances.put("" + e.getKey() + "," + f.getKey(), getShortestPath(e.getValue(), f.getValue()))));
     }
 
-    public int getShortestVisit() {
+    public int getShortestVisit(boolean returnToStart) {
         ArrayList<ArrayList<Integer>> pathPermutations = generatePermutations(IntStream.range(1, points.size()).boxed().collect(Collectors.toSet()));
+        if (returnToStart) {
+            pathPermutations.forEach(a -> a.add(0));
+        }
         return pathPermutations.parallelStream()
                 .mapToInt(a -> IntStream.range(1, a.size())
                             .map(i -> distances.get("" + a.get(i-1) + "," + a.get(i)))
@@ -72,20 +75,20 @@ public class Roomba {
         LinkedList<RoombaState> queue = new LinkedList<>();
         HashSet<String> visited = new HashSet<>();
         queue.addLast(begin);
-        while (true) {
-            RoombaState state = queue.removeFirst();
-            if (state.y == end.y && state.x == end.x) {
-                return state.steps;
-            }
-            String position = state.y + "," + state.x;
-            if (!visited.contains(position) && map.get(state.y).get(state.x) >= 0) {
-                visited.add(position);
-                queue.addLast(new RoombaState(state.y - 1, state.x, state.steps + 1));
-                queue.addLast(new RoombaState(state.y + 1, state.x, state.steps + 1));
-                queue.addLast(new RoombaState(state.y, state.x - 1, state.steps + 1));
-                queue.addLast(new RoombaState(state.y, state.x + 1, state.steps + 1));
-            }
-        }
+        return IntStream.iterate(0, i -> i+1)
+                .mapToObj(i -> queue.removeFirst())
+                .peek(state -> {
+                    String position = state.y + "," + state.x;
+                    if (!visited.contains(position) && map.get(state.y).get(state.x) >= 0) {
+                        visited.add(position);
+                        queue.addLast(new RoombaState(state.y - 1, state.x, state.steps + 1));
+                        queue.addLast(new RoombaState(state.y + 1, state.x, state.steps + 1));
+                        queue.addLast(new RoombaState(state.y, state.x - 1, state.steps + 1));
+                        queue.addLast(new RoombaState(state.y, state.x + 1, state.steps + 1));
+                    }
+                }).filter(state -> state.y == end.y && state.x == end.x)
+                .mapToInt(state -> state.steps)
+                .findFirst().getAsInt();
     }
 
     private static ArrayList<ArrayList<Integer>> generatePermutations(Set<Integer> remaining) {
@@ -108,6 +111,8 @@ public class Roomba {
     }
 
     public static void main(String args[]) {
-        System.out.println("Part 1: " + new Roomba().getShortestVisit());
+        Roomba roomba = new Roomba();
+        System.out.println("Part 1: " + roomba.getShortestVisit(false));
+        System.out.println("Part 2: " + roomba.getShortestVisit(true));
     }
 }
