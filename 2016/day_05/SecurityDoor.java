@@ -1,7 +1,6 @@
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.AbstractMap;
 import java.util.stream.IntStream;
 
 public class SecurityDoor {
@@ -9,7 +8,7 @@ public class SecurityDoor {
     private MessageDigest md5;
     private String doorID;
     private char[] password = "________".toCharArray();
-    private long index = 0;
+    private int index = 0;
 
     public SecurityDoor(String doorID) {
         this.doorID = doorID;
@@ -28,37 +27,40 @@ public class SecurityDoor {
     public void getPassword() {
         printPassword();
         IntStream.range(0, 8).forEachOrdered(i -> {
-            password[i] = generateNextPasswordCharacter().getKey();
+            password[i] = generateNextPasswordHash().charAt(5);
             printPassword();
         });
     }
 
     public void getBetterPassword() {
         printPassword();
-        do {
-            AbstractMap.Entry<Character, Character> pair = generateNextPasswordCharacter();
-            int position = Character.digit(pair.getKey(), 16);
-            if (position >= 0 && position <= 7 && password[position] == '_') {
-                password[position] = pair.getValue();
-                printPassword();
-            }
-        } while(String.valueOf(password).contains("_"));
+        IntStream.iterate(0, i -> i + 1)
+                .mapToObj(i -> generateNextPasswordHash())
+                .filter(s -> {
+                    int position = Character.digit(s.charAt(5), 16);
+                    return position >= 0 && position <= 7 && password[position] == '_';
+                }).peek(s -> {
+                    password[Character.digit(s.charAt(5), 16)] = s.charAt(6);
+                    printPassword();
+                }).anyMatch(s -> !String.valueOf(password).contains("_"));
     }
 
-    private AbstractMap.Entry<Character, Character> generateNextPasswordCharacter() {
-        String hash;
-        do {
-            md5.update((doorID + index++).getBytes());
-            hash = String.format("%032x", new BigInteger(1, md5.digest()));
-        } while(!hash.startsWith("00000"));
+    private String generateNextPasswordHash() {
+        index = IntStream.iterate(index, i -> i + 1)
+                .filter(i -> hash(doorID + i).startsWith("00000"))
+                .findFirst().getAsInt();
+        return hash(doorID + index++);
+    }
 
-        return new AbstractMap.SimpleEntry<>(hash.charAt(5), hash.charAt(6));
+    private String hash(String input) {
+        md5.update(input.getBytes());
+        return String.format("%032x", new BigInteger(1, md5.digest()));
     }
 
     public static void main(String args[]) {
         System.out.println("Part 1:");
         new SecurityDoor("ojvtpuvg").getPassword();
-        System.out.println("Part 2:");
+        System.out.println("\nPart 2:");
         new SecurityDoor("ojvtpuvg").getBetterPassword();
     }
 }
