@@ -1,6 +1,8 @@
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.stream.IntStream;
 
@@ -54,6 +56,36 @@ public class VaultMaze {
                 .findFirst().orElse("");
     }
 
+    public int getLongestPathLength() {
+        return getLongestPathLength(new MazeState(0, 0, ""));
+    }
+
+    private int getLongestPathLength(MazeState state) {
+        if (state.y == 3 && state.x == 3) {
+            return state.path.length();
+        }
+
+        if (state.y >= 0 && state.y < 4 && state.x >= 0 && state.x < 4) {
+            int[] permissions = getDoorPermissions(state.path);
+            ArrayList<Integer> pathLengths = new ArrayList<>(4);
+            if (permissions[0] > 10) {
+                pathLengths.add(getLongestPathLength(new MazeState(state.y-1, state.x, state.path + "U")));
+            }
+            if (permissions[1] > 10) {
+                pathLengths.add(getLongestPathLength(new MazeState(state.y+1, state.x, state.path + "D")));
+            }
+            if (permissions[2] > 10) {
+                pathLengths.add(getLongestPathLength(new MazeState(state.y, state.x-1, state.path + "L")));
+            }
+            if (permissions[3] > 10) {
+                pathLengths.add(getLongestPathLength(new MazeState(state.y, state.x+1, state.path + "R")));
+            }
+            return pathLengths.size() > 0 ? Collections.max(pathLengths) : -1;
+        } else {
+            return -1;
+        }
+    }
+
     private int[] getDoorPermissions(String path) {
         md5.update((this.passcode + path).getBytes());
         String hash = String.format("%032x", new BigInteger(1, md5.digest()));
@@ -64,6 +96,8 @@ public class VaultMaze {
     }
 
     public static void main(String args[]) {
-        System.out.println("Part 1: " + new VaultMaze("vwbaicqe").getShortestPath());
+        VaultMaze maze = new VaultMaze("vwbaicqe");
+        System.out.println("Part 1: " + maze.getShortestPath());
+        System.out.println("Part 2: " + maze.getLongestPathLength());
     }
 }
